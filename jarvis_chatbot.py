@@ -15,17 +15,26 @@ gcp_postgres_user = st.secrets["pg_user"]
 gcp_postgres_password = st.secrets["pg_password"]
 gcp_postgres_dbname = st.secrets["pg_db"]
 
-st.markdown(
+
+def run_user_sql(user_sql):
     """
-    <style>
-    .reportview-container {
-        background: url("images/jarvis_bg.webp");
-        background-size: cover;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+    Executes the user-entered SQL query and displays the results.
+    :param user_sql: The user-entered SQL query.
+    """
+    if not validate_sql_query(user_sql):
+        st.error("Disallowed SQL keywords detected. Access Denied.")
+        return
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        result, df = execute_sql_query(cursor, user_sql)
+        st.write("Results:")
+        st.dataframe(df)
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+    finally:
+        close_db_connection(conn, cursor=None)
 
 
 def display_message(role, content):
@@ -109,21 +118,21 @@ def validate_sql_query(sql_query):
     disallowed_keywords = ['INSERT', 'UPDATE', 'DELETE', 'DROP', ';', '--', 'CREATE', 'ALTER']
     for keyword in disallowed_keywords:
         if re.search(f'\\b{keyword}\\b', sql_query, re.IGNORECASE):
-            return False, f"Disallowed SQL keyword detected: {keyword}"
+            return False, f"Disallowed SQL keyword detected. Access denied."
 
     return True
 
 
-def call_chatbot(user_query):
+def call_chatbot(user_query, conn):
     """
     Processes the user's query to generate, execute an SQL query, and display the results.
     :param user_query: The user's input query.
     """
 
     openai.api_key = openai_api_key
-    conn = get_db_connection()
     sql_query = get_sql_from_codex(user_query)  # Generate SQL
     if not validate_sql_query(sql_query):
+        close_db_connection(conn, cursor=None)
         raise ValueError("Keywords or characters detected that could trigger an attack")
 
     try:
@@ -151,8 +160,6 @@ def call_chatbot(user_query):
 
     except Exception as e:
         st.write("An error occurred:", str(e))
-
-    finally:
         close_db_connection(conn, cursor=None)
 
 
@@ -160,9 +167,16 @@ if __name__ == "__main__":
 
     st.title("Jarvis")
     st.subheader("Empowering your superhero employees to run before they can walk")  # Added subtitle
+    conn = get_db_connection()
+
+    user_sql = st.text_input("Enter your SQL query:", key="sql_input")
+    if user_sql:
+        run_user_sql(user_sql)
+
     user_query = st.text_input("Enter your question: What information do you seek from our DB today?",
                                key="chat_input")
-
     if user_query:
         display_message("user", user_query)
-        call_chatbot(user_query)
+        call_chatbot(user_query, conn)
+
+    close_db_connection(conn, cursor=None)
