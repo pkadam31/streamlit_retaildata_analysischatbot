@@ -16,7 +16,7 @@ gcp_postgres_password = st.secrets["pg_password"]
 gcp_postgres_dbname = st.secrets["pg_db"]
 
 
-def run_user_sql(user_sql):
+def run_user_sql(user_sql, conn):
     """
     Executes the user-entered SQL query and displays the results.
     :param user_sql: The user-entered SQL query.
@@ -25,16 +25,15 @@ def run_user_sql(user_sql):
         st.error("Disallowed SQL keywords detected. Access Denied.")
         return
 
-    conn = get_db_connection()
     try:
         cursor = conn.cursor()
         result, df = execute_sql_query(cursor, user_sql)
         st.write("Results:")
         st.dataframe(df)
+
     except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-    finally:
         close_db_connection(conn, cursor=None)
+        st.error(f"An error occurred: {str(e)}")
 
 
 def display_message(role, content):
@@ -159,8 +158,8 @@ def call_chatbot(user_query, conn):
         st.dataframe(df)
 
     except Exception as e:
-        st.write("An error occurred:", str(e))
         close_db_connection(conn, cursor=None)
+        st.write("An error occurred:", str(e))
 
 
 if __name__ == "__main__":
@@ -169,14 +168,14 @@ if __name__ == "__main__":
     st.subheader("Empowering your superhero employees to run before they can walk")  # Added subtitle
     conn = get_db_connection()
 
-    user_sql = st.text_input("Enter your SQL query:", key="sql_input")
-    if user_sql:
-        run_user_sql(user_sql)
-
     user_query = st.text_input("Enter your question: What information do you seek from our DB today?",
                                key="chat_input")
     if user_query:
         display_message("user", user_query)
         call_chatbot(user_query, conn)
+
+    user_sql = st.text_input("Don't need Jarvis? Run your own SQL here-", key="sql_input")
+    if user_sql:
+        run_user_sql(user_sql, conn)
 
     close_db_connection(conn, cursor=None)
