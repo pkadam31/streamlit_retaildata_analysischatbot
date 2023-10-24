@@ -70,8 +70,8 @@ def get_sql_from_codex(user_query):
             {"role": "system", "content": context},
             {"role": "user", "content": user_query},
         ],
-        temperature=0.3,  # Lower temperature to reduce randomness
-        max_tokens=80
+        temperature=0.2,  # Lower temperature to reduce randomness
+        max_tokens=50
     )
 
     return response['choices'][0]['message']['content']
