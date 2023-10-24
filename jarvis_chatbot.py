@@ -15,6 +15,25 @@ gcp_postgres_user = st.secrets["pg_user"]
 gcp_postgres_password = st.secrets["pg_password"]
 gcp_postgres_dbname = st.secrets["pg_db"]
 
+st.markdown(
+    """
+    <style>
+    .reportview-container {
+        background: url("images/jarvis_bg.webp");
+        background-size: cover;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+def display_message(role, content):
+    """
+    Display messages using Streamlit's built-in chat UI.
+    """
+    with st.chat_message(role):
+        st.text(content)
 
 def get_db_connection():
     """
@@ -71,7 +90,7 @@ def get_sql_from_codex(user_query):
             {"role": "user", "content": user_query},
         ],
         temperature=0.2,  # Lower temperature to reduce randomness
-        max_tokens=50
+        max_tokens=55
     )
 
     return response['choices'][0]['message']['content']
@@ -121,7 +140,9 @@ def call_chatbot(user_query):
         interpretation = response_with_results['choices'][0]['message']['content']
 
         # Display results in Streamlit
-        st.write("SQL Query:", sql_query)
+        display_sql = st.radio("Would you like to view the SQL query?", ["No", "Yes"])
+        if display_sql == "Yes":
+            st.write("SQL Query:", sql_query)
         st.write("Explanation:", interpretation)
         st.write("Results:")
         st.dataframe(df)
@@ -135,8 +156,10 @@ def call_chatbot(user_query):
 
 if __name__ == "__main__":
 
-    st.title("Hi, I'm Jarvis. Your SQL Generator, Executor, and Insights Provider!")
+    st.title("Jarvis")
+    st.subheader("Empowering your superhero employees to run before they can walk")  # Added subtitle
     user_query = st.text_input("Enter your question: What information do you seek from our DB today?")
 
     if user_query:
+        display_message("user", user_query)
         call_chatbot(user_query)
