@@ -89,8 +89,8 @@ def get_sql_from_codex(user_query):
             {"role": "system", "content": context},
             {"role": "user", "content": user_query},
         ],
-        temperature=0.2,  # Lower temperature to reduce randomness
-        max_tokens=55
+        temperature=0.3,  # Lower temperature to reduce randomness
+        max_tokens=50
     )
 
     return response['choices'][0]['message']['content']
@@ -140,8 +140,7 @@ def call_chatbot(user_query):
         interpretation = response_with_results['choices'][0]['message']['content']
 
         # Display results in Streamlit
-        display_sql = st.radio("Would you like to view the SQL query?", ["No", "Yes"])
-        if display_sql == "Yes":
+        with st.expander("Display SQL", expanded=False):
             st.write("SQL Query:", sql_query)
         st.write("Explanation:", interpretation)
         st.write("Results:")
@@ -158,7 +157,8 @@ if __name__ == "__main__":
 
     st.title("Jarvis")
     st.subheader("Empowering your superhero employees to run before they can walk")  # Added subtitle
-    user_query = st.text_input("Enter your question: What information do you seek from our DB today?")
+    user_query = st.text_input("Enter your question: What information do you seek from our DB today?",
+                               key="chat_input")
 
     if user_query:
         display_message("user", user_query)
