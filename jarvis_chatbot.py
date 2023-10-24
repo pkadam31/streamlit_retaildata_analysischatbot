@@ -15,18 +15,6 @@ gcp_postgres_user = st.secrets["pg_user"]
 gcp_postgres_password = st.secrets["pg_password"]
 gcp_postgres_dbname = st.secrets["pg_db"]
 
-st.markdown(
-    """
-    <style>
-    .reportview-container {
-        background: url("images/jarvis_bg.webp");
-        background-size: cover;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 
 def display_message(role, content):
     """
@@ -82,7 +70,7 @@ def get_sql_from_codex(user_query):
     :return: The generated SQL query.
     """
 
-    user_query = "Generate a SQL query to " + user_query + ". Do not return anything other than the query"
+    user_query = "Generate a SQL query to " + user_query
 
     openai.api_key = openai_api_key
     response = openai.ChatCompletion.create(
@@ -91,7 +79,7 @@ def get_sql_from_codex(user_query):
             {"role": "system", "content": context},
             {"role": "user", "content": user_query},
         ],
-        temperature=0.3,  # Lower temperature to reduce randomness
+        temperature=0.4,  # Lower temperature to reduce randomness
         max_tokens=100
     )
 
